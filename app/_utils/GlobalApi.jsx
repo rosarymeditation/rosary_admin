@@ -1,6 +1,5 @@
-
 const { default: axios } = require("axios");
-const url ="http://localhost:8001/api/";
+const url = "http://localhost:8001/api/";
 const axiosClient = axios.create({
   baseURL: url,
 });
@@ -10,8 +9,6 @@ const axiosClient = axios.create({
 //   },
 // };
 // export const header = async () => {
-  
-
 
 //   return {
 //     headers: {
@@ -35,92 +32,82 @@ const axiosClient = axios.create({
 // //address/create
 
 // const createRestaurant = async (data) => {
-  
+
 //   return await axiosClient.post("restaurant/create", data);
 // };
 const novenas = async () => {
-   
   return await axiosClient.post("all_novenas", {});
 };
 const distressList = async () => {
-   
   return await axiosClient.post("findAllAdmin", {});
 };
 
 const psalmList = async () => {
-   
   return await axiosClient.post("psalm_findAllAdmin", {});
 };
 //distressList
 
 const novenaById = async (data) => {
-   
   return await axiosClient.post(`novena_by_id`, data);
 };
 
 const distressById = async (data) => {
-   
   return await axiosClient.post(`distress_by_id`, data);
 };
 
 const psalmById = async (data) => {
-   
   return await axiosClient.post(`psalm_by_id`, data);
 };
 
-
 const updatePrayer = async (formData) => {
-   
   return await axiosClient.post(`prayer_update`, formData, {
     headers: {
-      'Content-Type': 'multipart/form-data',
+      "Content-Type": "multipart/form-data",
     },
   });
 };
 //distress_update
 const updateDistress = async (formData) => {
-   
   return await axiosClient.post(`distress_update`, formData, {
     headers: {
-      'Content-Type': 'multipart/form-data',
+      "Content-Type": "multipart/form-data",
     },
   });
 };
 const createPrayer = async (formData) => {
-   
   return await axiosClient.post(`prayer`, formData, {
     headers: {
-      'Content-Type': 'multipart/form-data',
+      "Content-Type": "multipart/form-data",
     },
   });
 };
 
-const createPsalm= async (formData) => {
-   
+const createDailyReading = async (formData) => {
+  return await axiosClient.post(`create-dailyReading`, formData);
+};
+
+const createPsalm = async (formData) => {
   return await axiosClient.post(`psalm`, formData, {
     headers: {
-      'Content-Type': 'multipart/form-data',
+      "Content-Type": "multipart/form-data",
     },
   });
 };
 const psalmUpdate = async (data) => {
-   
   return await axiosClient.post(`psalm_update`, data);
 };
-
-
 
 const createDistress = async (formData) => {
   return await axiosClient.post(`distress`, formData, {
     headers: {
-      'Content-Type': 'multipart/form-data',
+      "Content-Type": "multipart/form-data",
     },
   });
 };
 
 // //
 // const products = async (data) => {
-   
+
 //   return await axiosClient.post("product/all", {});
 // };
 //
@@ -177,15 +164,15 @@ const createDistress = async (formData) => {
 //locationParams
 
 export default {
-//   getCategory,
-//   getBanners,
-//   getPopuparProducts,
-//   getProductByCategoryName,
-//   postSignIn,
-//   postSignUp,
-//   getDelivery,
-//   postSignUpWithPost,
-//   findAddressByUser,
+  //   getCategory,
+  //   getBanners,
+  //   getPopuparProducts,
+  //   getProductByCategoryName,
+  //   postSignIn,
+  //   postSignUp,
+  //   getDelivery,
+  //   postSignUpWithPost,
+  //   findAddressByUser,
   novenas,
   novenaById,
   updatePrayer,
@@ -197,15 +184,16 @@ export default {
   psalmUpdate,
   createPsalm,
   psalmById,
-  psalmList
-//   toggleAddress,
-//   deleteAddress,
-//   createCheckoutSession,
-//   createTransaction,
-//   getSessionToken,
-//   userTransactions,
-//   getSearch,
-//   findProductByName,
-//   getLocationParams,
-//   getPrivacyAndTerms,
+  psalmList,
+  createDailyReading,
+  //   toggleAddress,
+  //   deleteAddress,
+  //   createCheckoutSession,
+  //   createTransaction,
+  //   getSessionToken,
+  //   userTransactions,
+  //   getSearch,
+  //   findProductByName,
+  //   getLocationParams,
+  //   getPrivacyAndTerms,
 };
