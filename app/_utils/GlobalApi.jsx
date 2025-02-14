@@ -1,5 +1,5 @@
 const { default: axios } = require("axios");
-const url = "http://localhost:8001/api/";
+const url = "https://softnergy.co.uk/api/";
 const axiosClient = axios.create({
   baseURL: url,
 });
@@ -66,7 +66,48 @@ const updatePrayer = async (formData) => {
     },
   });
 };
-//distress_update
+
+const postFeed = async (formData) => {
+  // Retrieve the token or other data from localStorage
+  const token = localStorage.getItem("authToken"); // Replace 'yourTokenKey' with the key you saved the token under
+
+  // Make the POST request with the token added to the headers
+  return await axiosClient.post("feed", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+      Authorization: `Bearer ${token}`, // Pass the token as Authorization header
+    },
+  });
+};
+
+const updateFeed = async (id, formData) => {
+  // Retrieve the token or other data from localStorage
+  const token = localStorage.getItem("authToken"); // Replace 'yourTokenKey' with the key you saved the token under
+
+  // Make the POST request with the token added to the headers
+  return await axiosClient.patch(`feed/${id}`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+      Authorization: `Bearer ${token}`, // Pass the token as Authorization header
+    },
+  });
+};
+//updateFeed
+const getFeed = async (id) => {
+  return await axiosClient.post("feedById", { id: id });
+};
+//getFeed
+const feeds = async (formData) => {
+  // Retrieve the token or other data from localStorage
+  const token = localStorage.getItem("authToken"); // Replace 'yourTokenKey' with the key you saved the token under
+
+  // Make the POST request with the token added to the headers
+  return await axiosClient.post("allFeeds", {});
+};
+//sign-in
+const signIn = async (formData) => {
+  return await axiosClient.post(`sign-in`, formData);
+};
 const updateDistress = async (formData) => {
   return await axiosClient.post(`distress_update`, formData, {
     headers: {
@@ -105,74 +146,7 @@ const createDistress = async (formData) => {
   });
 };
 
-// //
-// const products = async (data) => {
-
-//   return await axiosClient.post("product/all", {});
-// };
-//
-// const findAddressByUser = async () => {
-//   const user = JSON.parse(getCookieAsync(USER));
-//   console.log(user._id);
-//   return await axiosClient.post("address/byUser", { id: user._id });
-// };
-
-// const toggleAddress = async (id) => {
-//   const user = JSON.parse(getCookieAsync(USER));
-//   console.log(user._id);
-//   return await axiosClient.post("address/toggle", { userId: user._id, id: id });
-// };
-
-// const deleteAddress = async (id) => {
-//   const user = JSON.parse(getCookieAsync(USER));
-//   console.log(user._id);
-//   return await axiosClient.delete(`address/${id}`, {});
-// };
-// const createCheckoutSession = async (data) => {
-//   const user = JSON.parse(getCookieAsync(USER));
-//   data.id = user._id;
-//   return await axiosClient.post("stripe-payment", data);
-// };
-
-// const createTransaction = async (data) => {
-//   const user = JSON.parse(getCookieAsync(USER));
-//   console;
-//   data.id = user._id;
-//   return await axiosClient.post("transaction-create-web", data);
-// };
-
-// const getSessionToken = async (id) => {
-//   return await axiosClient.post("get-sessionToken", { id });
-// };
-
-// const userTransactions = async () => {
-//   const user = JSON.parse(getCookieAsync(USER));
-
-//   return await axiosClient.post("user-transactions-forWeb", { id: user._id });
-// };
-// const getSearch = async (data) => {
-//   return await axiosClient.post("product/search-for-web", data);
-// };
-
-// // const findProductByName = async (data) => {
-// //   return await axiosClient.post("product/findByName", data);
-// // };
-// const findProductByName = (data) =>
-//   axiosClient.post("product/findByName", data);
-
-// const getLocationParams = (data) => axiosClient.post("locationParams", {});
-//locationParams
-
 export default {
-  //   getCategory,
-  //   getBanners,
-  //   getPopuparProducts,
-  //   getProductByCategoryName,
-  //   postSignIn,
-  //   postSignUp,
-  //   getDelivery,
-  //   postSignUpWithPost,
-  //   findAddressByUser,
   novenas,
   novenaById,
   updatePrayer,
@@ -186,14 +160,9 @@ export default {
   psalmById,
   psalmList,
   createDailyReading,
-  //   toggleAddress,
-  //   deleteAddress,
-  //   createCheckoutSession,
-  //   createTransaction,
-  //   getSessionToken,
-  //   userTransactions,
-  //   getSearch,
-  //   findProductByName,
-  //   getLocationParams,
-  //   getPrivacyAndTerms,
+  signIn,
+  postFeed,
+  feeds,
+  getFeed,
+  updateFeed,
 };
