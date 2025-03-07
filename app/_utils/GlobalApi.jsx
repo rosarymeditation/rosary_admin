@@ -102,7 +102,7 @@ const feeds = async (formData) => {
   const token = localStorage.getItem("authToken"); // Replace 'yourTokenKey' with the key you saved the token under
 
   // Make the POST request with the token added to the headers
-  return await axiosClient.post("allFeeds", {});
+  return await axiosClient.post("allFeedsAdmin", {});
 };
 //sign-in
 const signIn = async (formData) => {
