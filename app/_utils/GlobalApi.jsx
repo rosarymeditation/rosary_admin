@@ -1,6 +1,6 @@
 const { default: axios } = require("axios");
-const url = "http://localhost:8001/api/";
-//const url = "https://softnergy.co.uk/api/";
+//const url = "http://localhost:8001/api/";
+const url = "https://softnergy.co.uk/api/";
 const axiosClient = axios.create({
   baseURL: url,
 });
