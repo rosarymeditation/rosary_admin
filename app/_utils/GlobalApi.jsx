@@ -1,5 +1,6 @@
 const { default: axios } = require("axios");
-const url = "https://softnergy.co.uk/api/";
+const url = "http://localhost:8001/api/";
+//const url = "https://softnergy.co.uk/api/";
 const axiosClient = axios.create({
   baseURL: url,
 });
@@ -41,7 +42,13 @@ const novenas = async () => {
 const distressList = async () => {
   return await axiosClient.post("findAllAdmin", {});
 };
-
+const createTestReading = async (formData) => {
+  return await axiosClient.post(`create-reading`, formData);
+};
+const checkReadingExist = async (formData) => {
+  return await axiosClient.post(`checkIfExist`, formData);
+};
+//checkIfExist
 const psalmList = async () => {
   return await axiosClient.post("psalm_findAllAdmin", {});
 };
@@ -165,4 +172,6 @@ export default {
   feeds,
   getFeed,
   updateFeed,
+  createTestReading,
+  checkReadingExist
 };
