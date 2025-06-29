@@ -3,8 +3,9 @@ import GlobalApi from "@/app/_utils/GlobalApi";
 import Head from "next/head";
 import { Terminal } from "lucide-react";
 import { AlertCircleIcon, CheckCircle2Icon, PopcornIcon } from "lucide-react";
-
+import { htmlToText } from "html-to-text";
 import { Loader2 } from "lucide-react";
+
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
@@ -26,10 +27,12 @@ const page = ({ params }) => {
   const [selectedLanguage, setSelectedLanguage] = useState("");
   const [contentEN, setContentEN] = useState("");
   const [contentES, setContentES] = useState("");
+  const [reflectionPlainEN, setReflectionPlainEN] = useState("");
+  const [reflectionPlainES, setReflectionPlainES] = useState("");
   const [audioEN, setAudioEN] = useState("");
   const [audioES, setAudioES] = useState("");
-  const [enFile, setEnFile] = useState("");
-  const [esFile, setEsFile] = useState("");
+  const [reflectionEN, setReflectionEN] = useState("");
+  const [reflectionES, setReflectionES] = useState("");
   const [selectedType, setSelectedType] = useState("");
   const [hasEnglishContent, setHasEnglishContent] = useState(false);
   const [hasSpanishContent, setHasSpanishContent] = useState(false);
@@ -45,23 +48,41 @@ const page = ({ params }) => {
   // const [imagePreviews, setImagePreviews] = useState([]);
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoading2, setIsLoading2] = useState(false);
 
   // useEffect(() => {
   //   const id = params.id;
   //   // setProduct(name);
   //   //loadData(id);
   // }, []);
-  const handleEnFile = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setEnFile(file);
+  const handleGetReflections = () => {
+    if (!contentEN) {
+      toast("Reading in English is required");
+      return;
     }
-  };
-  const handleEsFile = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setEsFile(file);
-    }
+    setIsLoading2(true);
+    // Example API call
+
+    GlobalApi.getReflection({ contentEnglish: contentEN })
+      .then((res) => {
+        console.log(res);
+        setReflectionEN(res.data.english);
+        setReflectionES(res.data.spanish);
+        const plainTextEN = htmlToText(res.data.english);
+        const plainTextES = htmlToText(res.data.spanish);
+        setReflectionPlainEN(plainTextEN);
+        setReflectionPlainES(plainTextES);
+        // Optionally set contentEN, contentES, etc.
+      })
+      .catch((err) => {
+        console.error("Error fetching reading:", err);
+      })
+      .finally(() => {
+        setIsLoading2(false);
+        // This block will run regardless of success or failure.
+        console.log("API request completed.");
+        // You can place any cleanup logic or actions that need to happen after the request here.
+      });
   };
   const handleDateSelect = (selectedDate) => {
     if (!selectedDate) return;
@@ -73,6 +94,7 @@ const page = ({ params }) => {
     console.log("Selected date:", formatted);
 
     // Example API call
+
     GlobalApi.checkReadingExist({ date: formatted })
       .then((res) => {
         if (!res.data.englishData) {
@@ -104,7 +126,7 @@ const page = ({ params }) => {
     return `${year}-${month}-${day}`;
   };
 
-  const handleCreate = async (e) => {
+  const handleUpdate = async (e) => {
     const newDate = new Date(date);
     const formattedDate = formatDate(newDate);
 
@@ -120,71 +142,15 @@ const page = ({ params }) => {
       toast("Date is required");
       return;
     }
-    if (!enFile) {
-      toast("Please upload the English audio file.");
-      return;
-    }
-
-    if (!esFile) {
-      toast("Please upload the Spanish audio file.");
-      return;
-    }
 
     setIsLoading(true); // 🔄 Show spinner
 
     try {
-      const formData = new FormData();
-
-      formData.append("contentEnglish", contentEN);
-      formData.append("contentSpanish", contentES);
-      formData.append("readingFileES", esFile);
-      formData.append("readingFileEN", enFile);
-      formData.append("date", formattedDate);
-      const result = await GlobalApi.createDailyReading(formData);
-
-      if (!result.data.error) {
-        toast.success(result.data.message || "Saved successfully");
-      } else {
-        toast.error(result.data.message || "Error occurred");
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error("Something went wrong.");
-    } finally {
-      setContentEN("");
-      setContentES("");
-      setIsLoading(false); // ✅ Hide spinner
-    }
-  };
-  const handleUpdateForAudio = async (e) => {
-    const newDate = new Date(date);
-    const formattedDate = formatDate(newDate);
-
-
-    if (!date) {
-      toast("Date is required");
-      return;
-    }
-    if (!enFile) {
-      toast("Please upload the English audio file.");
-      return;
-    }
-
-    if (!esFile) {
-      toast("Please upload the Spanish audio file.");
-      return;
-    }
-
-    setIsLoading(true); // 🔄 Show spinner
-
-    try {
-      const formData = new FormData();
-
-      
-      formData.append("readingFileES", esFile);
-      formData.append("readingFileEN", enFile);
-      formData.append("date", formattedDate);
-      const result = await GlobalApi.updateCreateDailyReading(formData);
+      const result = await GlobalApi.createDailyReading({
+        contentEnglish: contentEN,
+        contentSpanish: contentES,
+        date: formattedDate,
+      });
 
       if (!result.data.error) {
         toast.success(result.data.message || "Saved successfully");
@@ -205,39 +171,21 @@ const page = ({ params }) => {
       <Head>
         <title>Create Reading</title>
       </Head>
-      <div className="flex w-full items-baseline justify-center my-8">
-        <div className="flex flex-col items-center  justify-center p-10 gap-3 border-gray-200 w-full ">
-          <div className="lg:w-1/2 w-full   flex flex-col gap-4 items-center bg-gray-100 shadow-md p-4">
-            <h2 className="font-bold text-3xl text-center">Create</h2>
-            <h2 className="text-gray-500">Create</h2>
+      <div className="flex w-full items-baseline justify-start my-8">
+        <div className="flex flex-col items-start justify-start p-10 gap-3 border-gray-200 w-full">
+          <div className="lg:w-1/1 w-full flex flex-col gap-4 items-start bg-gray-100 shadow-md p-4">
+            <h2 className="font-bold text-3xl text-left">Create</h2>
+            <h2 className="text-gray-500 text-left">Create</h2>
 
+            {/* Calendar Component */}
             <Calendar
               mode="single"
               selected={date}
               onSelect={handleDateSelect}
-              className="rounded-md border"
+              className="rounded-md border w-full"
             />
-            {/* <select
-              onChange={handleSelectedLanguage}
-              className="w-full"
-              id="options"
-              name="options"
-            >
-              <option value="">Select Language</option>
-              <option value="6502946f6a369b86e4f201f2">Spanish</option>
-              <option value="650294586a369b86e4f201f0">English</option>
-            </select> */}
-            {/* <select
-              className="w-full"
-              id="options"
-              name="options"
-              onChange={handleSelectedType}
-            >
-               <option value="">Select Type </option>
-              <option value="6502ec837377d628e7187a53">CATHOLIC</option>
-              <option value="6502ec907377d628e7187a55">OTHERS</option>
-              <option value="65356b8812e66ebd41c5c6c3">NOVENA</option>
-            </select> */}
+
+            {/* Alert for English content */}
             {hasEnglishContent && (
               <Alert>
                 <CheckCircle2Icon className="h-4 w-4" />
@@ -248,42 +196,48 @@ const page = ({ params }) => {
                 </AlertDescription>
               </Alert>
             )}
+
+            <hr />
+
+            {/* Display if audio exists for English */}
             {audioEN && <div>Has audio</div>}
+
+            {/* Upload Audio File English */}
             <div className="text-sm flex flex-col items-start">
-              <label className="text-left">Upload File English</label>
-              <Input
-                onChange={handleEnFile}
-                id="picture"
-                type="file"
-                className="text-left"
-              />
+              <label className="text-left">Upload Audio File English</label>
+              <Input id="picture" type="file" className="text-left" />
             </div>
+
+            {/* Textarea for English content */}
             <Textarea
               className="w-full h-72"
               onChange={(e) => setContentEN(e.target.value)}
               type="text"
               placeholder="Plain text in English not HTML formatted"
             />
+
+            {/* Alert for Spanish content */}
             {hasSpanishContent && (
               <Alert>
                 <CheckCircle2Icon className="h-4 w-4" />
-                <AlertTitle>Reading already exists(Spanish)</AlertTitle>
+                <AlertTitle>Reading already exists (Spanish)</AlertTitle>
                 <AlertDescription>
                   A reading for the selected date has already been created or
                   updated.
                 </AlertDescription>
               </Alert>
             )}
-            {audioES && <div>Audio url: </div>}
+
+            {/* Display if audio exists for Spanish */}
+            {audioES && <div>Audio url:</div>}
+
+            {/* Upload Audio File Spanish */}
             <div className="text-sm flex flex-col items-start">
-              <label className="text-left">Upload File Spanish</label>
-              <Input
-                onChange={handleEsFile}
-                id="picture"
-                type="file"
-                className="text-left"
-              />
+              <label className="text-left">Upload Audio File Spanish</label>
+              <Input id="picture" type="file" className="text-left" />
             </div>
+
+            {/* Textarea for Spanish content */}
             <Textarea
               className="w-full h-72"
               onChange={(e) => setContentES(e.target.value)}
@@ -291,21 +245,69 @@ const page = ({ params }) => {
               placeholder="Plain text in Spanish not HTML formatted"
             />
 
+            <h />
+            <br />
+
+            {/* Upload Audio File for English Reflection */}
+            <div className="text-sm flex flex-col items-start">
+              <label className="text-left">
+                Upload Audio File For English Reflection
+              </label>
+              <Input id="picture" type="file" className="text-left" />
+            </div>
+
+            {/* Textarea for English reflection and Generate button */}
+            <div className="flex items-center w-full">
+              <Textarea
+                value={reflectionPlainEN}
+                className="w-full h-72"
+                onChange={(e) => setReflectionEN(e.target.value)}
+                type="text"
+                placeholder="Plain text in English reflection"
+              />
+              <Button onClick={handleGetReflections} className="ml-4">
+                {isLoading2 && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}{" "}
+                Generate
+              </Button>
+            </div>
+
+            {/* Upload Audio File for Spanish Reflection */}
+            <div className="text-sm flex flex-col items-start">
+              <label className="text-left">
+                Upload Audio File For Spanish Reflection
+              </label>
+              <Input id="picture" type="file" className="text-left" />
+            </div>
+
+            {/* Textarea for Spanish reflection and Generate button */}
+            <div className="flex items-center w-full">
+              <Textarea
+                value={reflectionPlainES}
+                className="w-full h-72"
+                onChange={(e) => setReflectionES(e.target.value)}
+                type="text"
+                placeholder="Plain text in Spanish reflection"
+              />
+              <Button onClick={handleGetReflections} className="ml-4">
+                {isLoading2 && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                Generate
+              </Button>
+            </div>
+
+            {/* Submit Button */}
             <Button
               disabled={!contentEN || !contentES || isLoading}
-              onClick={() => handleCreate()}
+              onClick={() => handleUpdate()}
             >
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Create
             </Button>
 
-            <Button className="bg-pink-950"
-              disabled={!enFile || !esFile || isLoading}
-              onClick={() => handleUpdateForAudio()}
-            >
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Update Only Audios
-            </Button>
+            {/* Link to list page */}
             <p>
               <Link className="text-blue-500" href="/dailyReading/list">
                 List

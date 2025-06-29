@@ -73,7 +73,15 @@ const updatePrayer = async (formData) => {
     },
   });
 };
+//getReflection
 
+const getReflection = async (formData) => {
+  // Retrieve the token or other data from localStorage
+  const token = localStorage.getItem("authToken"); // Replace 'yourTokenKey' with the key you saved the token under
+
+  // Make the POST request with the token added to the headers
+  return await axiosClient.post("getReflection", formData);
+};
 const postFeed = async (formData) => {
   // Retrieve the token or other data from localStorage
   const token = localStorage.getItem("authToken"); // Replace 'yourTokenKey' with the key you saved the token under
@@ -131,9 +139,21 @@ const createPrayer = async (formData) => {
 };
 
 const createDailyReading = async (formData) => {
-  return await axiosClient.post(`create-dailyReading`, formData);
+  return await axiosClient.post(`create-dailyReading`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
 };
 
+const updateCreateDailyReading = async (formData) => {
+  return await axiosClient.post(`update-create-reading`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+};
+//update-create-reading
 const createPsalm = async (formData) => {
   return await axiosClient.post(`psalm`, formData, {
     headers: {
@@ -173,5 +193,7 @@ export default {
   getFeed,
   updateFeed,
   createTestReading,
-  checkReadingExist
+  checkReadingExist,
+  getReflection,
+  updateCreateDailyReading
 };
