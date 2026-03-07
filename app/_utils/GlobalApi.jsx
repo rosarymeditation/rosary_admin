@@ -48,7 +48,11 @@ const createTestReading = async (formData) => {
 const checkReadingExist = async (formData) => {
   return await axiosClient.post(`checkIfExist`, formData);
 };
-//checkIfExist
+
+const checkIfSaintExist = async (formData) => {
+  return await axiosClient.post(`checkIfSaintExist`, formData);
+};
+//checkIfSaintExist
 const psalmList = async () => {
   return await axiosClient.post("psalm_findAllAdmin", {});
 };
@@ -88,6 +92,19 @@ const postFeed = async (formData) => {
 
   // Make the POST request with the token added to the headers
   return await axiosClient.post("feed", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+      Authorization: `Bearer ${token}`, // Pass the token as Authorization header
+    },
+  });
+};
+
+const postSaint = async (formData) => {
+  // Retrieve the token or other data from localStorage
+  const token = localStorage.getItem("authToken"); // Replace 'yourTokenKey' with the key you saved the token under
+
+  // Make the POST request with the token added to the headers
+  return await axiosClient.post("saint", formData, {
     headers: {
       "Content-Type": "multipart/form-data",
       Authorization: `Bearer ${token}`, // Pass the token as Authorization header
@@ -195,5 +212,7 @@ export default {
   createTestReading,
   checkReadingExist,
   getReflection,
-  updateCreateDailyReading
+  updateCreateDailyReading, 
+  postSaint,
+  checkIfSaintExist
 };
