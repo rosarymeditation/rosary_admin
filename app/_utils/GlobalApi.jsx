@@ -36,6 +36,17 @@ const axiosClient = axios.create({
 
 //   return await axiosClient.post("restaurant/create", data);
 // };
+const prayers = async (data) => {
+  return await axiosClient.post("prayers_admin", data || {});
+};
+
+const prayerById = async (data) => {
+  return await axiosClient.post("prayer_by_id", data);
+};
+
+const deletePrayer = async (id) => {
+  return await axiosClient.delete(`prayer/${id}`);//
+};
 const novenas = async () => {
   return await axiosClient.post("all_novenas", {});
 };
@@ -178,10 +189,16 @@ const createPsalm = async (formData) => {
     },
   });
 };
-const psalmUpdate = async (data) => {
-  return await axiosClient.post(`psalm_update`, data);
+const psalmUpdate = async (formData) => {
+  return await axiosClient.post(`psalm_update`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
 };
-
+const deletePsalm = async (id) => {
+  return await axiosClient.delete(`psalm/${id}`);
+};
 const createDistress = async (formData) => {
   return await axiosClient.post(`distress`, formData, {
     headers: {
@@ -200,6 +217,7 @@ export default {
   distressById,
   distressList,
   psalmUpdate,
+  deletePsalm,
   createPsalm,
   psalmById,
   psalmList,
@@ -214,5 +232,8 @@ export default {
   getReflection,
   updateCreateDailyReading, 
   postSaint,
-  checkIfSaintExist
+  checkIfSaintExist,
+  prayers,
+  prayerById,
+  deletePrayer,
 };
