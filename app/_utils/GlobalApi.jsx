@@ -47,6 +47,11 @@ const prayerById = async (data) => {
 const deletePrayer = async (id) => {
   return await axiosClient.delete(`prayer/${id}`);//
 };
+const createPlan = async (formData) => {
+  return await axiosClient.post("plan", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+};
 const novenas = async () => {
   return await axiosClient.post("all_novenas", {});
 };
@@ -236,4 +241,5 @@ export default {
   prayers,
   prayerById,
   deletePrayer,
+  createPlan
 };
