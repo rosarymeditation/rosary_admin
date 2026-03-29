@@ -20,7 +20,7 @@ const UsersPage = () => {
   const [suspendingId, setSuspendingId] = useState(null);
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
-  const [expandedIps, setExpandedIps] = useState({}); // track which rows show IPs
+  const [expandedIps, setExpandedIps] = useState({});
 
   const fetchUsers = async (currentPage = 1, searchTerm = "") => {
     setIsLoading(true);
@@ -32,7 +32,6 @@ const UsersPage = () => {
         age_max: 90,
       });
       const fetched = res.data?.data || [];
-
       const filtered = searchTerm
         ? fetched.filter(
           (u) =>
@@ -40,7 +39,6 @@ const UsersPage = () => {
             u.email?.toLowerCase().includes(searchTerm.toLowerCase())
         )
         : fetched;
-
       setUsers(filtered);
       setHasMore(fetched.length === PAGE_LIMIT);
     } catch (err) {
@@ -114,8 +112,9 @@ const UsersPage = () => {
 
       {/* Table */}
       <div className="max-w-6xl mx-auto bg-white border border-[#e5e0d8] shadow-sm overflow-hidden">
+
         {/* Table Header */}
-        <div className="grid grid-cols-[120px_1fr_1fr_130px_130px] bg-[#1a1a1a] text-white text-xs uppercase tracking-widest px-4 py-3">
+        <div className="grid grid-cols-[1fr_1fr_1fr_130px_130px] bg-[#1a1a1a] text-white text-xs uppercase tracking-widest px-4 py-3">
           <span>Photo</span>
           <span>Name</span>
           <span>Email</span>
@@ -123,7 +122,7 @@ const UsersPage = () => {
           <span className="text-right">Action</span>
         </div>
 
-        {/* Loading */}
+        {/* Loading State */}
         {isLoading && (
           <div className="flex justify-center items-center py-20 text-[#888]">
             <Loader2 className="w-6 h-6 animate-spin mr-2" />
@@ -131,18 +130,28 @@ const UsersPage = () => {
           </div>
         )}
 
-        {/* Empty */}
+        {/* Empty State */}
         {!isLoading && users.length === 0 && (
           <div className="text-center py-20 text-[#aaa] text-sm">
             No users found.
           </div>
         )}
 
-        {/* Rows */}
+        {/* User Rows */}
         {!isLoading &&
           users.map((user, i) => {
             const ipList = (user.ipLogs || []).slice(0, 10);
             const isExpanded = expandedIps[user._id];
+
+            const uniqueCities = [
+              ...new Set(
+                (user.ipLogs || [])
+                  .map((log) =>
+                    [log.city, log.country].filter(Boolean).join(", ")
+                  )
+                  .filter(Boolean)
+              ),
+            ];
 
             return (
               <div
@@ -151,44 +160,47 @@ const UsersPage = () => {
                   } hover:bg-[#f3ede4]`}
               >
                 {/* Main Row */}
-                <div className="grid grid-cols-[120px_1fr_1fr_130px_130px] items-center px-4 py-3 gap-3">
-                  {/* Avatar — 3x bigger: 120px */}
-                  <div className="w-[120px] h-[120px] rounded-md overflow-hidden bg-[#e5e0d8] flex items-center justify-center flex-shrink-0">
-                    {user.profileImage?.[0]?.url ? (
-                      <Image
-                        src={user.profileImage[0].url}
-                        alt={user.firstname || "user"}
-                        width={120}
-                        height={120}
-                        className="object-cover w-full h-full"
-                      />
+                <div className="grid grid-cols-[1fr_1fr_1fr_130px_130px] items-start px-4 py-3 gap-3">
+
+                  {/* Photos — flex-wrap so all images are visible */}
+                  <div className="flex flex-wrap gap-1.5">
+                    {user.profileImage?.length > 0 ? (
+                      user.profileImage.map((img, idx) => (
+                        <div
+                          key={idx}
+                          className="relative w-[60px] h-[60px] flex-shrink-0 rounded-md overflow-hidden bg-[#e5e0d8] border border-[#ddd] hover:scale-[1.03] transition"
+                        >
+                          <Image
+                            src={img.url}
+                            alt={`${user.firstname} photo ${idx + 1}`}
+                            fill
+                            sizes="60px"
+                            className="object-cover"
+                          />
+                        </div>
+                      ))
                     ) : (
-                      <span className="text-[#8b4513] font-bold text-3xl">
-                        {user.firstname?.[0] || "?"}
-                      </span>
+                      <div className="w-[60px] h-[60px] flex-shrink-0 rounded-md bg-[#e5e0d8] flex items-center justify-center border border-[#ddd]">
+                        <span className="text-[#8b4513] font-bold text-xl">
+                          {user.firstname?.[0] || "?"}
+                        </span>
+                      </div>
                     )}
                   </div>
 
-                  {/* Name + IP toggle */}
-                  <div className="flex flex-col gap-1">
-                    <p className="font-semibold text-[#1a1a1a] text-sm">{user.firstname}</p>
-                    <p className="text-[#aaa] text-xs">{user.gender} · {user.location?.country || "—"}</p>
-
-                    {/* Cities logged */}
-                    {(() => {
-                      const cities = [...new Set(
-                        (user.ipLogs || [])
-                          .map(log => [log.city, log.country].filter(Boolean).join(", "))
-                          .filter(Boolean)
-                      )];
-                      return cities.length > 0 ? (
-                        <p className="text-xs text-[#888] leading-relaxed">
-                          📍 {cities.join(" · ")}
-                        </p>
-                      ) : null;
-                    })()}
-
-                    {/* IP toggle button */}
+                  {/* Name + Meta */}
+                  <div className="flex flex-col gap-1 pt-1">
+                    <p className="font-semibold text-[#1a1a1a] text-sm">
+                      {user.firstname}
+                    </p>
+                    <p className="text-[#aaa] text-xs">
+                      {user.gender} · {user.location?.country || "—"}
+                    </p>
+                    {uniqueCities.length > 0 && (
+                      <p className="text-xs text-[#888] leading-relaxed">
+                        📍 {uniqueCities.join(" · ")}
+                      </p>
+                    )}
                     <button
                       onClick={() => toggleIps(user._id)}
                       className="flex items-center gap-1 text-[#8b4513] text-xs mt-1 hover:underline w-fit"
@@ -197,19 +209,20 @@ const UsersPage = () => {
                       {ipList.length > 0
                         ? `${ipList.length} IP address${ipList.length > 1 ? "es" : ""}`
                         : "No IPs logged"}
-                      {ipList.length > 0 && (
-                        isExpanded
-                          ? <ChevronUp className="w-3 h-3" />
-                          : <ChevronDown className="w-3 h-3" />
-                      )}
+                      {ipList.length > 0 &&
+                        (isExpanded ? (
+                          <ChevronUp className="w-3 h-3" />
+                        ) : (
+                          <ChevronDown className="w-3 h-3" />
+                        ))}
                     </button>
                   </div>
 
                   {/* Email */}
-                  <p className="text-sm text-[#555] truncate">{user.email}</p>
+                  <p className="text-sm text-[#555] truncate pt-1">{user.email}</p>
 
                   {/* Status */}
-                  <div>
+                  <div className="pt-1">
                     {user.suspended ? (
                       <span className="inline-flex items-center bg-red-100 text-red-700 border border-red-200 text-xs px-2 py-1">
                         <Ban className="w-3 h-3 mr-1" /> Suspended
@@ -222,7 +235,7 @@ const UsersPage = () => {
                   </div>
 
                   {/* Action */}
-                  <div className="flex justify-end">
+                  <div className="flex justify-end pt-1">
                     <Button
                       size="sm"
                       disabled={suspendingId === user._id}
@@ -235,15 +248,19 @@ const UsersPage = () => {
                       {suspendingId === user._id ? (
                         <Loader2 className="w-3 h-3 animate-spin" />
                       ) : user.suspended ? (
-                        <><ShieldOff className="w-3 h-3 mr-1" /> Unsuspend</>
+                        <>
+                          <ShieldOff className="w-3 h-3 mr-1" /> Unsuspend
+                        </>
                       ) : (
-                        <><Shield className="w-3 h-3 mr-1" /> Suspend</>
+                        <>
+                          <Shield className="w-3 h-3 mr-1" /> Suspend
+                        </>
                       )}
                     </Button>
                   </div>
                 </div>
 
-                {/* IP Addresses Expandable Panel */}
+                {/* IP Expandable Panel */}
                 {isExpanded && ipList.length > 0 && (
                   <div className="px-4 pb-4 bg-[#f5f0e8] border-t border-[#e5e0d8]">
                     <p className="text-xs uppercase tracking-widest text-[#888] py-2">

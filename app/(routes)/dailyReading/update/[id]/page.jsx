@@ -2,181 +2,649 @@
 import GlobalApi from "@/app/_utils/GlobalApi";
 import Head from "next/head";
 import { useRouter } from "next/navigation";
-import { Input } from "@/components/ui/input";
-import React, { useEffect, useState } from "react";
-import Image from "next/image";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner"
+import { toast } from "sonner";
+import {
+  BookOpen,
+  Edit3,
+  Save,
+  X,
+  Play,
+  Pause,
+  Volume2,
+  FileAudio,
+  Languages,
+  ArrowLeft,
+  Loader2,
+  RefreshCw,
+  CheckCircle2,
+  Upload,
+  Mic,
+} from "lucide-react";
 
+// ─── Audio Player ──────────────────────────────────────────────────────────────
 
-const page = ({ params }) => {
-  const [images, setImages] = useState([]);
-  const [newImages, setNewImages] = useState([]);
-  const [selectedImage, setSelectedImage] = useState({});
+function AudioPlayer({ url, label, color }) {
+  const audioRef = useRef(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+
+  const formatTime = (s) => {
+    if (!s || isNaN(s)) return "0:00";
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return `${m}:${sec.toString().padStart(2, "0")}`;
+  };
+
+  const togglePlay = () => {
+    if (!audioRef.current) return;
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      audioRef.current.play();
+      setIsPlaying(true);
+    }
+  };
+
+  const handleTimeUpdate = () => {
+    if (!audioRef.current) return;
+    const cur = audioRef.current.currentTime;
+    const dur = audioRef.current.duration || 0;
+    setCurrentTime(cur);
+    setProgress(dur ? (cur / dur) * 100 : 0);
+  };
+
+  const handleLoadedMetadata = () => {
+    if (audioRef.current) setDuration(audioRef.current.duration || 0);
+  };
+
+  const handleEnded = () => setIsPlaying(false);
+
+  const handleSeek = (e) => {
+    if (!audioRef.current || !duration) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const pct = (e.clientX - rect.left) / rect.width;
+    audioRef.current.currentTime = pct * duration;
+  };
+
+  if (!url) {
+    return (
+      <div style={{
+        display: "flex", alignItems: "center", gap: 10,
+        background: "rgba(255,255,255,0.02)",
+        border: "1px dashed rgba(255,255,255,0.08)",
+        borderRadius: 10, padding: "12px 16px",
+        color: "#4b5563", fontSize: 13,
+      }}>
+        <FileAudio size={15} />
+        <span>No audio uploaded for {label}</span>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{
+      background: "rgba(255,255,255,0.03)",
+      border: `1px solid ${color}44`,
+      borderRadius: 12, padding: "14px 16px",
+      display: "flex", flexDirection: "column", gap: 10,
+    }}>
+      <audio
+        ref={audioRef}
+        src={url}
+        onTimeUpdate={handleTimeUpdate}
+        onLoadedMetadata={handleLoadedMetadata}
+        onEnded={handleEnded}
+        preload="metadata"
+      />
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <button onClick={togglePlay} style={{
+          width: 38, height: 38, borderRadius: "50%",
+          background: color, border: "none", cursor: "pointer",
+          display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+        }}>
+          {isPlaying
+            ? <Pause size={15} color="#fff" />
+            : <Play size={15} color="#fff" style={{ marginLeft: 2 }} />}
+        </button>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <Volume2 size={12} style={{ color }} />
+            <span style={{ fontSize: 12, fontWeight: 600, color: "#9ca3af", letterSpacing: "0.05em" }}>
+              {label}
+            </span>
+            <span style={{ marginLeft: "auto", fontSize: 11, color: "#6b7280", fontVariantNumeric: "tabular-nums" }}>
+              {formatTime(currentTime)} / {formatTime(duration)}
+            </span>
+          </div>
+          <div onClick={handleSeek} style={{
+            height: 4, background: "rgba(255,255,255,0.08)",
+            borderRadius: 999, cursor: "pointer", position: "relative",
+          }}>
+            <div style={{
+              position: "absolute", left: 0, top: 0, bottom: 0,
+              width: `${progress}%`, background: color,
+              borderRadius: 999, transition: "width 0.1s linear",
+            }} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Section Card ──────────────────────────────────────────────────────────────
+
+function SectionCard({ icon: Icon, title, color, badge, children }) {
+  return (
+    <div style={{
+      background: "rgba(255,255,255,0.025)",
+      border: "1px solid rgba(255,255,255,0.07)",
+      borderRadius: 16, overflow: "hidden",
+    }}>
+      <div style={{
+        display: "flex", alignItems: "center", gap: 10,
+        padding: "16px 20px",
+        borderBottom: "1px solid rgba(255,255,255,0.06)",
+        background: "rgba(255,255,255,0.02)",
+      }}>
+        <span style={{
+          background: color, borderRadius: 8, padding: "5px 7px",
+          display: "flex", alignItems: "center",
+        }}>
+          <Icon size={14} color="#fff" />
+        </span>
+        <span style={{
+          fontFamily: "'Cormorant Garamond', serif",
+          fontSize: 17, fontWeight: 600, color: "#f0ebe3",
+        }}>
+          {title}
+        </span>
+        {badge && (
+          <span style={{
+            marginLeft: "auto", fontSize: 11, fontWeight: 600,
+            letterSpacing: "0.06em", textTransform: "uppercase",
+            color: "#6ee7b7", background: "rgba(74,180,120,0.1)",
+            border: "1px solid rgba(74,180,120,0.2)",
+            borderRadius: 6, padding: "2px 8px",
+          }}>
+            {badge}
+          </span>
+        )}
+      </div>
+      <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 14 }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// ─── HTML Preview ──────────────────────────────────────────────────────────────
+
+function HtmlPreview({ html, label }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <span style={{
+        fontSize: 11, fontWeight: 700, letterSpacing: "0.08em",
+        textTransform: "uppercase", color: "#6b7280",
+      }}>
+        {label}
+      </span>
+      <div
+        dangerouslySetInnerHTML={{ __html: html || "<p style='color:#4b5563'>No content</p>" }}
+        style={{
+          background: "rgba(255,255,255,0.02)",
+          border: "1px solid rgba(255,255,255,0.06)",
+          borderRadius: 10, padding: 16,
+          color: "#d1c7b8", fontSize: 14, lineHeight: 1.8,
+          maxHeight: 300, overflowY: "auto",
+        }}
+      />
+    </div>
+  );
+}
+
+// ─── Editable Field ────────────────────────────────────────────────────────────
+
+function EditableField({ label, value, onChange, placeholder, rows = 10 }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <span style={{
+        fontSize: 11, fontWeight: 700, letterSpacing: "0.08em",
+        textTransform: "uppercase", color: "#6b7280",
+      }}>
+        {label}
+      </span>
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        rows={rows}
+        style={{
+          width: "100%", background: "rgba(255,255,255,0.04)",
+          border: "1px solid rgba(255,255,255,0.1)",
+          borderRadius: 10, padding: "12px 14px",
+          color: "#f0ebe3", fontSize: 14, lineHeight: 1.7,
+          resize: "vertical", outline: "none",
+          fontFamily: "'DM Sans', sans-serif", boxSizing: "border-box",
+        }}
+      />
+      <div style={{ textAlign: "right", fontSize: 11, color: "#4b5563" }}>
+        {(value || "").length.toLocaleString()} characters
+      </div>
+    </div>
+  );
+}
+
+// ─── File Upload Button ────────────────────────────────────────────────────────
+
+function FileUploadButton({ id, label, file, onChange }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <label style={{
+        fontSize: 11, fontWeight: 700, letterSpacing: "0.08em",
+        textTransform: "uppercase", color: "#6b7280",
+      }}>
+        {label}
+      </label>
+      <label htmlFor={id} style={{
+        display: "flex", alignItems: "center", gap: 10,
+        background: file ? "rgba(74,180,120,0.06)" : "rgba(255,255,255,0.03)",
+        border: file ? "1px dashed rgba(74,180,120,0.4)" : "1px dashed rgba(255,255,255,0.12)",
+        borderRadius: 10, padding: "11px 14px", cursor: "pointer",
+        fontSize: 13, color: file ? "#6ee7b7" : "#6b7280", transition: "all 0.2s",
+      }}>
+        {file ? <CheckCircle2 size={15} /> : <Upload size={15} />}
+        <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {file ? file.name : "Click to select a replacement audio file"}
+        </span>
+      </label>
+      <input id={id} type="file" accept="audio/*" onChange={onChange} style={{ display: "none" }} />
+    </div>
+  );
+}
+
+// ─── Main Page ─────────────────────────────────────────────────────────────────
+
+// ✅ App Router: receive params as a prop, not useParams()
+const EditDailyReadingPage = ({ params }) => {
   const router = useRouter();
-  const [id, setId] = useState("");
-  const [title, setTitle] = useState("");
-  const [url, setUrl] = useState("");
-  const [selectedLanguage, setSelectedLanguage] = useState("");
-  const [content, setContent] = useState("");
-  const [selectedType, setSelectedType] = useState("");
-  //setPreviewUrl
-  const [previewUrl, setPreviewUrl] = useState("");
-  // const [weight, setWeight] = useState("");
-  // const [weightType, setWeightType] = useState("");
-  // const [isPopular, setIsPopular] = useState("");
-  // const [category, setCategory] = useState("");
-  // const [isAvailable, setIsAvailable] = useState("");
-  // const [canShow, setCanShow] = useState("");
-  // const [selectedFiles, setSelectedFiles] = useState([]);
-  // const [imagePreviews, setImagePreviews] = useState([]);
+  const id = params?.id;
 
-  const [isLoading, setIsLoading] = useState(false);
-  const loadData = (id) => {
-    GlobalApi.distressById({
-      id,
-    }).then((resp) => {
-      console.log(resp.data);
-      const distress = resp.data.data;
-      setTitle(distress.title);
-      setContent(distress.content);
-      setUrl(distress.url);
-     
-      setSelectedLanguage(distress.language);
-      setId(id);
-      console.log(distress);
-      // setDescription(resp.data?.description);
-      // setPrice(resp.data?.price);
-      // setSalePrice(resp.data?.salePrice);
-      // setWeight(resp.data?.weight);
-      // setIsAvailable(resp.data?.isAvailable);
-      // setCanShow(resp.data?.canShow);
-      // setIsPopular(resp.data?.isPopular);
-      // setCategory(resp.data?.category);
-      // setWeightType(resp.data?.weightType);
-    });
-  };
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+
+  const [enRecord, setEnRecord] = useState(null);
+  const [esRecord, setEsRecord] = useState(null);
+  const [contentEN, setContentEN] = useState("");
+  const [contentES, setContentES] = useState("");
+  const [newAudioEN, setNewAudioEN] = useState(null);
+  const [newAudioES, setNewAudioES] = useState(null);
+
   useEffect(() => {
-    const id = params.id;
-    // setProduct(name);
-    loadData(id);
-  }, []);
+    if (id) loadReading();
+  }, [id]);
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setSelectedImage(file);
-      setPreviewUrl(URL.createObjectURL(file));
-    }
-  };
-  
-  const handleSelectedLanguage = (event) => {
-    console.log(event.target.value);
-    setSelectedLanguage(event.target.value);
-  };
-  const handleUpdate = (e) => {
-    if(!selectedLanguage){
-      toast("Select language.");
-      return;
-    }
-   
-    if(!selectedImage){
-      toast("Select image.");
-      return;
-    }
-    const formData = new FormData();
-    formData.append("id", id);
-    formData.append("title", title);
-    formData.append("content", content);
-    formData.append("language", selectedLanguage);
-   
-   
-      formData.append("photo", selectedImage);
-    
-    GlobalApi.updateDistress(formData).then((result) => {
-      console.log(result.data);
-      
-      if (!result.data.error) {
-        console.log("oeoeooe")
-        toast("Prayer has been updated.")
-
+  const loadReading = async () => {
+    setIsLoading(true);
+    try {
+      // Fetch the target record by ID
+      const res = await GlobalApi.getDailyReadingById({ id });
+      const record = res.data?.data;
+      if (!record) {
+        toast.error("Reading not found.");
+        return;
       }
-    });
+
+      // Fetch the EN+ES pair by date
+      const dateStr = record.date
+        ? new Date(record.date).toISOString().split("T")[0]
+        : null;
+
+      let en = null;
+      let es = null;
+
+      if (dateStr) {
+        const dateRes = await GlobalApi.searchDailyReadingByDate({ date: dateStr, limit: 10 });
+        const all = dateRes.data?.data || [];
+        en = all.find((r) => r.language?.name?.toLowerCase().includes("english")) || null;
+        es = all.find((r) => r.language?.name?.toLowerCase().includes("spanish")) || null;
+      }
+
+      // Fallback: the record itself if pair search failed
+      if (!en && !es) {
+        const isEn = record.language?.name?.toLowerCase().includes("english");
+        if (isEn) en = record; else es = record;
+      }
+
+      setEnRecord(en);
+      setEsRecord(es);
+      setContentEN(en?.content || "");
+      setContentES(es?.content || "");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to load reading.");
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  const handleSave = async () => {
+    if (!contentEN.trim() || !contentES.trim()) {
+      toast.error("Both English and Spanish content are required.");
+      return;
+    }
+    setIsSaving(true);
+    try {
+      await GlobalApi.updateDailyReading({
+        id: enRecord?._id || esRecord?._id,
+        contentEnglish: contentEN,
+        contentSpanish: contentES,
+      });
+      toast.success("Reading queued for reprocessing. GPT is reformatting in the background.");
+      setIsEditing(false);
+      loadReading();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update reading.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleAudioUpdate = async () => {
+    if (!newAudioEN && !newAudioES) {
+      toast.error("Please select at least one audio file.");
+      return;
+    }
+    setIsSaving(true);
+    try {
+      const formData = new FormData();
+      const dateStr = (enRecord?.date || esRecord?.date)
+        ? new Date(enRecord?.date || esRecord?.date).toISOString().split("T")[0]
+        : "";
+      formData.append("date", dateStr);
+      if (newAudioEN) formData.append("readingFileEN", newAudioEN);
+      if (newAudioES) formData.append("readingFileES", newAudioES);
+      await GlobalApi.updateCreateDailyReading(formData);
+      toast.success("Audio files replaced successfully.");
+      setNewAudioEN(null);
+      setNewAudioES(null);
+      loadReading();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update audio.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setContentEN(enRecord?.content || "");
+    setContentES(esRecord?.content || "");
+    setIsEditing(false);
+  };
+
+  const displayDate = (enRecord?.date || esRecord?.date)
+    ? new Date(enRecord?.date || esRecord?.date).toLocaleDateString("en-GB", {
+      weekday: "long", day: "numeric", month: "long", year: "numeric",
+    })
+    : "—";
+
+  const liturgicalType = enRecord?.type || esRecord?.type || "—";
+
   return (
     <>
       <Head>
-      <title>Distress Update</title>
-     
-    </Head>
-      <div className="flex w-full items-baseline justify-center my-8">
-        <div className="flex flex-col items-center  justify-center p-10 gap-3 border-gray-200 w-full ">
-          <div className="lg:w-1/2 w-full   flex flex-col gap-4 items-center bg-gray-100 shadow-md p-4">
-            <h2 className="font-bold text-3xl text-center">Update</h2>
-            <h2 className="text-gray-500">Update</h2>
+        <title>Edit Daily Reading — Admin</title>
+        <link
+          href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@400;500;600&display=swap"
+          rel="stylesheet"
+        />
+      </Head>
 
-            <Image
-              className="object-cover w-full h-[200px]"
-              width={100}
-              height={100}
-              src={previewUrl || url}
-            />
+      <style>{`
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.4s ease forwards; }
+        textarea:focus { border-color: rgba(180,83,9,0.5) !important; box-shadow: 0 0 0 2px rgba(180,83,9,0.1); }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+      `}</style>
 
-            <Input
-              value={title}
-              className="w-full"
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Title"
-            />
-            <input type="file" accept="image/*" onChange={handleImageChange} />
-            <select
-              onChange={handleSelectedLanguage}
-              value={selectedLanguage}
-              className="w-full"
-              id="options"
-              name="options"
-            >
-              <option value="6502946f6a369b86e4f201f2">Spanish</option>
-              <option value="650294586a369b86e4f201f0">English</option>
-            </select>
-            {/* <select
-              value={selectedType}
-              className="w-full"
-              id="options"
-              name="options"
-              onChange={handleSelectedType}
-            >
-              <option value="6502ec837377d628e7187a53">CATHOLIC</option>
-              <option value="6502ec907377d628e7187a55">OTHERS</option>
-              <option value="65356b8812e66ebd41c5c6c3">NOVENA</option>
-            </select> */}
+      <div style={{
+        minHeight: "100vh",
+        background: "linear-gradient(160deg, #0f0c08 0%, #1a1208 55%, #0d1117 100%)",
+        fontFamily: "'DM Sans', sans-serif",
+        color: "#f0ebe3",
+        padding: "36px 16px 80px",
+      }}>
+        <div style={{ maxWidth: 820, margin: "0 auto" }}>
 
-            <Textarea
-              className="w-full h-72"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              type="text"
-              placeholder="Content"
-            />
-            <Button
-              disabled={!(title && content) || isLoading}
-              onClick={() => handleUpdate()}
-            >
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Update
-            </Button>
-            <p>
-              <Link className="text-blue-500" href="/novena/list">
-                List
-              </Link>
-            </p>
+          {/* ── Header ──────────────────────────────────────────────── */}
+          <div style={{ marginBottom: 28 }}>
+            <Link href="/dailyReading/list" style={{
+              display: "inline-flex", alignItems: "center", gap: 6,
+              color: "#6b7280", fontSize: 13, textDecoration: "none", marginBottom: 20,
+            }}>
+              <ArrowLeft size={14} /> Back to list
+            </Link>
+
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+              <div>
+                <div style={{
+                  display: "inline-flex", alignItems: "center", gap: 6,
+                  background: "rgba(180,83,9,0.12)", border: "1px solid rgba(180,83,9,0.25)",
+                  borderRadius: 999, padding: "4px 12px", marginBottom: 10,
+                  fontSize: 11, fontWeight: 700, letterSpacing: "0.1em",
+                  textTransform: "uppercase", color: "#fbbf24",
+                }}>
+                  <BookOpen size={11} /> Daily Reading
+                </div>
+                <h1 style={{
+                  fontFamily: "'Cormorant Garamond', serif",
+                  fontSize: "clamp(24px, 4vw, 38px)",
+                  fontWeight: 700, color: "#fef3c7", margin: 0, lineHeight: 1.1,
+                }}>
+                  {isLoading ? "Loading…" : displayDate}
+                </h1>
+                {!isLoading && (
+                  <p style={{ color: "#6b7280", fontSize: 14, margin: "6px 0 0" }}>
+                    {liturgicalType}
+                  </p>
+                )}
+              </div>
+
+              {/* Edit / Save / Cancel */}
+              {!isLoading && (
+                <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                  {isEditing ? (
+                    <>
+                      <button onClick={handleCancelEdit} style={{
+                        display: "flex", alignItems: "center", gap: 6,
+                        padding: "10px 16px", borderRadius: 10,
+                        background: "rgba(255,255,255,0.05)",
+                        border: "1px solid rgba(255,255,255,0.1)",
+                        color: "#9ca3af", fontSize: 13, fontWeight: 600, cursor: "pointer",
+                      }}>
+                        <X size={14} /> Cancel
+                      </button>
+                      <button onClick={handleSave} disabled={isSaving} style={{
+                        display: "flex", alignItems: "center", gap: 6,
+                        padding: "10px 18px", borderRadius: 10,
+                        background: isSaving
+                          ? "rgba(180,83,9,0.3)"
+                          : "linear-gradient(135deg, #b45309, #92400e)",
+                        border: "none", color: "#fef3c7",
+                        fontSize: 13, fontWeight: 600,
+                        cursor: isSaving ? "not-allowed" : "pointer",
+                      }}>
+                        {isSaving
+                          ? <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />
+                          : <Save size={14} />}
+                        {isSaving ? "Saving…" : "Save Changes"}
+                      </button>
+                    </>
+                  ) : (
+                    <button onClick={() => setIsEditing(true)} style={{
+                      display: "flex", alignItems: "center", gap: 6,
+                      padding: "10px 18px", borderRadius: 10,
+                      background: "rgba(180,83,9,0.15)",
+                      border: "1px solid rgba(180,83,9,0.3)",
+                      color: "#fbbf24", fontSize: 13, fontWeight: 600, cursor: "pointer",
+                    }}>
+                      <Edit3 size={14} /> Edit Reading
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
+
+          {/* ── Loading state ────────────────────────────────────────── */}
+          {isLoading ? (
+            <div style={{
+              display: "flex", flexDirection: "column",
+              alignItems: "center", gap: 16, padding: "80px 0", color: "#6b7280",
+            }}>
+              <Loader2 size={32} style={{ animation: "spin 1s linear infinite", color: "#b45309" }} />
+              <span style={{ fontSize: 14 }}>Loading reading…</span>
+            </div>
+          ) : (
+            <div className="fade-in" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+
+              {/* ── English ─────────────────────────────────────────── */}
+              <SectionCard icon={Languages} title="English" color="#1d4ed8" badge="EN">
+                <AudioPlayer url={enRecord?.readingAudio} label="Reading Audio" color="#3b82f6" />
+                <AudioPlayer url={enRecord?.reflectionAudio} label="Reflection Audio" color="#6366f1" />
+                {isEditing ? (
+                  <EditableField
+                    label="Scripture Text (plain text — GPT will reformat on save)"
+                    value={contentEN}
+                    onChange={setContentEN}
+                    placeholder="Paste plain English scripture text here..."
+                    rows={12}
+                  />
+                ) : (
+                  <>
+                    <HtmlPreview html={enRecord?.content} label="Formatted Reading" />
+                    <HtmlPreview html={enRecord?.summary} label="Reflection" />
+                  </>
+                )}
+              </SectionCard>
+
+              {/* ── Spanish ─────────────────────────────────────────── */}
+              <SectionCard icon={Languages} title="Spanish" color="#7c3aed" badge="ES">
+                <AudioPlayer url={esRecord?.readingAudio} label="Audio de Lectura" color="#8b5cf6" />
+                <AudioPlayer url={esRecord?.reflectionAudio} label="Audio de Reflexión" color="#a78bfa" />
+                {isEditing ? (
+                  <EditableField
+                    label="Texto de la Escritura (texto plano — GPT reformateará al guardar)"
+                    value={contentES}
+                    onChange={setContentES}
+                    placeholder="Pega aquí el texto bíblico en español..."
+                    rows={12}
+                  />
+                ) : (
+                  <>
+                    <HtmlPreview html={esRecord?.content} label="Lectura Formateada" />
+                    <HtmlPreview html={esRecord?.summary} label="Reflexión" />
+                  </>
+                )}
+              </SectionCard>
+
+              {/* ── Replace Audio Only ───────────────────────────────── */}
+              <SectionCard icon={Mic} title="Replace Audio Files" color="#b45309">
+                <p style={{ margin: 0, fontSize: 13, color: "#9ca3af", lineHeight: 1.6 }}>
+                  Upload new reading audio files. This only updates the audio URLs — it does not re-run GPT.
+                </p>
+                <FileUploadButton
+                  id="newAudioEN"
+                  label="New English Reading Audio"
+                  file={newAudioEN}
+                  onChange={(e) => setNewAudioEN(e.target.files[0] || null)}
+                />
+                <FileUploadButton
+                  id="newAudioES"
+                  label="New Spanish Reading Audio"
+                  file={newAudioES}
+                  onChange={(e) => setNewAudioES(e.target.files[0] || null)}
+                />
+                <button
+                  onClick={handleAudioUpdate}
+                  disabled={isSaving || (!newAudioEN && !newAudioES)}
+                  style={{
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                    padding: "11px 20px", borderRadius: 10, width: "100%",
+                    background: (!newAudioEN && !newAudioES) || isSaving
+                      ? "rgba(255,255,255,0.04)"
+                      : "rgba(180,83,9,0.15)",
+                    border: (!newAudioEN && !newAudioES) || isSaving
+                      ? "1px solid rgba(255,255,255,0.06)"
+                      : "1px solid rgba(180,83,9,0.3)",
+                    color: (!newAudioEN && !newAudioES) || isSaving ? "#374151" : "#fbbf24",
+                    fontSize: 13, fontWeight: 600,
+                    cursor: (!newAudioEN && !newAudioES) || isSaving ? "not-allowed" : "pointer",
+                  }}
+                >
+                  {isSaving
+                    ? <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />
+                    : <RefreshCw size={14} />}
+                  Update Audio Files
+                </button>
+              </SectionCard>
+
+              {/* ── Save banner when editing ─────────────────────────── */}
+              {isEditing && (
+                <div style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  gap: 12, flexWrap: "wrap",
+                  padding: "16px 20px",
+                  background: "rgba(180,83,9,0.08)",
+                  border: "1px solid rgba(180,83,9,0.2)",
+                  borderRadius: 12,
+                }}>
+                  <p style={{ margin: 0, fontSize: 13, color: "#d97706", lineHeight: 1.5, flex: 1 }}>
+                    <strong>Saving will re-run GPT</strong> — content will be reformatted, a new reflection generated, and new audio produced. This may take a minute or two.
+                  </p>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button onClick={handleCancelEdit} style={{
+                      padding: "9px 16px", borderRadius: 8,
+                      background: "rgba(255,255,255,0.05)",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      color: "#9ca3af", fontSize: 13, fontWeight: 600, cursor: "pointer",
+                    }}>
+                      Cancel
+                    </button>
+                    <button onClick={handleSave} disabled={isSaving} style={{
+                      display: "flex", alignItems: "center", gap: 6,
+                      padding: "9px 18px", borderRadius: 8,
+                      background: "linear-gradient(135deg, #b45309, #92400e)",
+                      border: "none", color: "#fef3c7",
+                      fontSize: 13, fontWeight: 600,
+                      cursor: isSaving ? "not-allowed" : "pointer",
+                    }}>
+                      {isSaving
+                        ? <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />
+                        : <Save size={13} />}
+                      {isSaving ? "Saving…" : "Save & Reprocess"}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+            </div>
+          )}
         </div>
       </div>
     </>
   );
 };
 
-export default page;
+export default EditDailyReadingPage;
