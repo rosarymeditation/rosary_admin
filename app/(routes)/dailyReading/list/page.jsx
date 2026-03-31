@@ -89,7 +89,7 @@ function EmptyState({ query }) {
       </p>
       {!query && (
         <Link
-          href="/dailyReading/generate"
+          href="/dailyReading/create"
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -166,6 +166,7 @@ function DeleteModal({ item, onConfirm, onCancel, isDeleting }) {
           Are you sure you want to delete the reading for{" "}
           <strong style={{ color: "#fbbf24" }}>
             {formatDisplayDate(item?.date)}
+            {item?.title ? ` — ${item.title}` : ""}
           </strong>
           ? This cannot be undone.
         </p>
@@ -261,6 +262,7 @@ const DailyReadingList = () => {
         (item) =>
           item.language?.name?.toLowerCase().includes(q) ||
           item.type?.toLowerCase().includes(q) ||
+          item.title?.toLowerCase().includes(q) ||
           formatDisplayDate(item.date).toLowerCase().includes(q)
       );
     }
@@ -362,7 +364,7 @@ const DailyReadingList = () => {
                 </p>
               </div>
               <Link
-                href="/dailyReading/generate"
+                href="/dailyReading/create"
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
@@ -506,7 +508,7 @@ const DailyReadingList = () => {
               <table style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead>
                   <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-                    {["Date", "Type", "Language", "Audio", "", ""].map((h, i) => (
+                    {["Date", "Title", "Type", "Language", "Audio", "", ""].map((h, i) => (
                       <th
                         key={i}
                         style={{
@@ -541,6 +543,22 @@ const DailyReadingList = () => {
                             {formatDisplayDate(item.date)}
                           </span>
                         </div>
+                      </td>
+                      <td style={{ padding: "14px 16px" }}>
+                        {item.title ? (
+                          <span style={{
+                            fontSize: 12, fontWeight: 600,
+                            color: "#fbbf24",
+                            background: "rgba(180,83,9,0.1)",
+                            border: "1px solid rgba(180,83,9,0.2)",
+                            borderRadius: 6, padding: "2px 8px",
+                            whiteSpace: "nowrap",
+                          }}>
+                            {item.title}
+                          </span>
+                        ) : (
+                          <span style={{ fontSize: 12, color: "#4b5563" }}>—</span>
+                        )}
                       </td>
                       <td style={{ padding: "14px 16px" }}>
                         <span style={{ fontSize: 13, color: "#9ca3af" }}>
