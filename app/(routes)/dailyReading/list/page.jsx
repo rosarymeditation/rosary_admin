@@ -53,6 +53,7 @@ function LanguagePill({ name }) {
         fontWeight: 600,
         letterSpacing: "0.06em",
         textTransform: "uppercase",
+        whiteSpace: "nowrap",
         background: isSpanish
           ? "rgba(124, 58, 237, 0.15)"
           : "rgba(29, 78, 216, 0.15)",
@@ -311,6 +312,10 @@ const DailyReadingList = () => {
         .fade-in { animation: fadeIn 0.4s ease forwards; }
         tr { transition: background 0.15s; }
         tr:hover td { background: rgba(255,255,255,0.03) !important; }
+        /* Slim, unobtrusive scrollbar for the table wrapper */
+        .table-scroll::-webkit-scrollbar { height: 8px; }
+        .table-scroll::-webkit-scrollbar-track { background: transparent; }
+        .table-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 8px; }
       `}</style>
 
       <div
@@ -495,7 +500,7 @@ const DailyReadingList = () => {
               background: "rgba(255,255,255,0.02)",
               border: "1px solid rgba(255,255,255,0.07)",
               borderRadius: 14,
-              overflow: "hidden",
+              overflow: "hidden", // clips rounded corners only, not content
             }}
           >
             {isLoading ? (
@@ -505,132 +510,164 @@ const DailyReadingList = () => {
             ) : paginated.length === 0 ? (
               <EmptyState query={searchQuery || dateFilter} />
             ) : (
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                <thead>
-                  <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-                    {["Date", "Title", "Type", "Language", "Audio", "", ""].map((h, i) => (
-                      <th
-                        key={i}
+              // Scrollable wrapper: table can now scroll horizontally instead of
+              // being clipped, so the Edit/Delete columns are always reachable.
+              <div className="table-scroll" style={{ overflowX: "auto" }}>
+                <table
+                  style={{
+                    width: "100%",
+                    minWidth: 720,
+                    borderCollapse: "collapse",
+                    tableLayout: "fixed",
+                  }}
+                >
+                  <colgroup>
+                    <col style={{ width: "18%" }} />
+                    <col style={{ width: "28%" }} />
+                    <col style={{ width: "14%" }} />
+                    <col style={{ width: "16%" }} />
+                    <col style={{ width: "12%" }} />
+                    <col style={{ width: "6%" }} />
+                    <col style={{ width: "6%" }} />
+                  </colgroup>
+                  <thead>
+                    <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+                      {["Date", "Title", "Type", "Language", "Audio", "", ""].map((h, i) => (
+                        <th
+                          key={i}
+                          style={{
+                            padding: "12px 16px",
+                            textAlign: i >= 4 ? "center" : "left",
+                            fontSize: 11,
+                            fontWeight: 700,
+                            letterSpacing: "0.08em",
+                            textTransform: "uppercase",
+                            color: "#6b7280",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paginated.map((item, idx) => (
+                      <tr
+                        key={item._id}
+                        className="fade-in"
                         style={{
-                          padding: "12px 16px",
-                          textAlign: i >= 4 ? "center" : "left",
-                          fontSize: 11,
-                          fontWeight: 700,
-                          letterSpacing: "0.08em",
-                          textTransform: "uppercase",
-                          color: "#6b7280",
+                          borderBottom: "1px solid rgba(255,255,255,0.04)",
+                          animationDelay: `${idx * 30}ms`,
                         }}
                       >
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginated.map((item, idx) => (
-                    <tr
-                      key={item._id}
-                      className="fade-in"
-                      style={{
-                        borderBottom: "1px solid rgba(255,255,255,0.04)",
-                        animationDelay: `${idx * 30}ms`,
-                      }}
-                    >
-                      <td style={{ padding: "14px 16px" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <CalendarDays size={14} style={{ color: "#b45309", flexShrink: 0 }} />
-                          <span style={{ fontSize: 14, color: "#f0ebe3", fontWeight: 500 }}>
-                            {formatDisplayDate(item.date)}
+                        <td style={{ padding: "14px 16px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <CalendarDays size={14} style={{ color: "#b45309", flexShrink: 0 }} />
+                            <span style={{ fontSize: 14, color: "#f0ebe3", fontWeight: 500, whiteSpace: "nowrap" }}>
+                              {formatDisplayDate(item.date)}
+                            </span>
+                          </div>
+                        </td>
+                        <td style={{ padding: "14px 16px", overflow: "hidden" }}>
+                          {item.title ? (
+                            <span
+                              title={item.title}
+                              style={{
+                                display: "inline-block",
+                                maxWidth: "100%",
+                                fontSize: 12,
+                                fontWeight: 600,
+                                color: "#fbbf24",
+                                background: "rgba(180,83,9,0.1)",
+                                border: "1px solid rgba(180,83,9,0.2)",
+                                borderRadius: 6,
+                                padding: "2px 8px",
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                verticalAlign: "middle",
+                              }}
+                            >
+                              {item.title}
+                            </span>
+                          ) : (
+                            <span style={{ fontSize: 12, color: "#4b5563" }}>—</span>
+                          )}
+                        </td>
+                        <td style={{ padding: "14px 16px" }}>
+                          <span style={{ fontSize: 13, color: "#9ca3af" }}>
+                            {item.type || "—"}
                           </span>
-                        </div>
-                      </td>
-                      <td style={{ padding: "14px 16px" }}>
-                        {item.title ? (
-                          <span style={{
-                            fontSize: 12, fontWeight: 600,
-                            color: "#fbbf24",
-                            background: "rgba(180,83,9,0.1)",
-                            border: "1px solid rgba(180,83,9,0.2)",
-                            borderRadius: 6, padding: "2px 8px",
-                            whiteSpace: "nowrap",
-                          }}>
-                            {item.title}
-                          </span>
-                        ) : (
-                          <span style={{ fontSize: 12, color: "#4b5563" }}>—</span>
-                        )}
-                      </td>
-                      <td style={{ padding: "14px 16px" }}>
-                        <span style={{ fontSize: 13, color: "#9ca3af" }}>
-                          {item.type || "—"}
-                        </span>
-                      </td>
-                      <td style={{ padding: "14px 16px" }}>
-                        <LanguagePill name={item.language?.name} />
-                      </td>
-                      <td style={{ padding: "14px 16px" }}>
-                        {item.readingAudio ? (
-                          <span
+                        </td>
+                        <td style={{ padding: "14px 16px" }}>
+                          <LanguagePill name={item.language?.name} />
+                        </td>
+                        <td style={{ padding: "14px 16px" }}>
+                          {item.readingAudio ? (
+                            <span
+                              style={{
+                                fontSize: 11,
+                                fontWeight: 600,
+                                color: "#6ee7b7",
+                                background: "rgba(74,180,120,0.1)",
+                                border: "1px solid rgba(74,180,120,0.2)",
+                                borderRadius: 6,
+                                padding: "2px 8px",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              ✓ Uploaded
+                            </span>
+                          ) : (
+                            <span style={{ fontSize: 11, color: "#4b5563" }}>—</span>
+                          )}
+                        </td>
+                        <td style={{ padding: "14px 16px", textAlign: "center" }}>
+                          <Link
+                            href={`/dailyReading/update/${item._id}`}
                             style={{
-                              fontSize: 11,
-                              fontWeight: 600,
-                              color: "#6ee7b7",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              width: 32,
+                              height: 32,
+                              borderRadius: 8,
                               background: "rgba(74,180,120,0.1)",
                               border: "1px solid rgba(74,180,120,0.2)",
-                              borderRadius: 6,
-                              padding: "2px 8px",
+                              color: "#6ee7b7",
+                              textDecoration: "none",
                             }}
+                            title="Edit"
                           >
-                            ✓ Uploaded
-                          </span>
-                        ) : (
-                          <span style={{ fontSize: 11, color: "#4b5563" }}>—</span>
-                        )}
-                      </td>
-                      <td style={{ padding: "14px 16px", textAlign: "center" }}>
-                        <Link
-                          href={`/dailyReading/update/${item._id}`}
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            width: 32,
-                            height: 32,
-                            borderRadius: 8,
-                            background: "rgba(74,180,120,0.1)",
-                            border: "1px solid rgba(74,180,120,0.2)",
-                            color: "#6ee7b7",
-                            textDecoration: "none",
-                          }}
-                          title="Edit"
-                        >
-                          <EditIcon size={13} />
-                        </Link>
-                      </td>
-                      <td style={{ padding: "14px 16px", textAlign: "center" }}>
-                        <button
-                          onClick={() => setDeleteTarget(item)}
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            width: 32,
-                            height: 32,
-                            borderRadius: 8,
-                            background: "rgba(220,38,38,0.1)",
-                            border: "1px solid rgba(220,38,38,0.2)",
-                            color: "#f87171",
-                            cursor: "pointer",
-                          }}
-                          title="Delete"
-                        >
-                          <Trash2Icon size={13} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                            <EditIcon size={13} />
+                          </Link>
+                        </td>
+                        <td style={{ padding: "14px 16px", textAlign: "center" }}>
+                          <button
+                            onClick={() => setDeleteTarget(item)}
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              width: 32,
+                              height: 32,
+                              borderRadius: 8,
+                              background: "rgba(220,38,38,0.1)",
+                              border: "1px solid rgba(220,38,38,0.2)",
+                              color: "#f87171",
+                              cursor: "pointer",
+                            }}
+                            title="Delete"
+                          >
+                            <Trash2Icon size={13} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
 
