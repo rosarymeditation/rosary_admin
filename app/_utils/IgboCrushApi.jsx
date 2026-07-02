@@ -1,5 +1,5 @@
 const { default: axios } = require("axios");
-const url = "http://localhost:8001/api/";
+const url = "https://www.server.igbocrush.com/api/";
 //const url = "https://www.server.igbocrush.com/api/";
 const axiosClient = axios.create({
   baseURL: url,
