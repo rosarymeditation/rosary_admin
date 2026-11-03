@@ -13,8 +13,9 @@ import Image from "next/image";
 
 const PAGE_LIMIT = 20;
 
-// Columns: Photo · Name & details · Email · Status · Action
-const GRID = "grid grid-cols-[1fr_1.3fr_1fr_150px_130px]";
+// Desktop columns: Photo · Name & details · Email · Status · Action
+// On phones (below lg) each user is a stacked card instead.
+const GRID = "lg:grid lg:grid-cols-[1fr_1.3fr_1fr_150px_130px]";
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 // Photo verification status, case-insensitive ("Approved" / "approved")
@@ -276,10 +277,10 @@ const UsersPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f9f6f1] px-4 py-10 font-[Georgia,serif]">
+    <div className="min-h-screen bg-[#f9f6f1] px-3 sm:px-4 py-6 sm:py-10 font-[Georgia,serif]">
       {/* Header */}
       <div className="max-w-6xl mx-auto mb-8">
-        <h1 className="text-4xl font-bold text-[#1a1a1a] tracking-tight">
+        <h1 className="text-2xl sm:text-4xl font-bold text-[#1a1a1a] tracking-tight">
           User Management
         </h1>
         <p className="text-[#888] mt-1 text-sm">
@@ -308,7 +309,7 @@ const UsersPage = () => {
       <div className="max-w-6xl mx-auto bg-white border border-[#e5e0d8] shadow-sm overflow-hidden">
 
         {/* Table Header */}
-        <div className={`${GRID} bg-[#1a1a1a] text-white text-xs uppercase tracking-widest px-4 py-3`}>
+        <div className={`hidden ${GRID} bg-[#1a1a1a] text-white text-xs uppercase tracking-widest px-4 py-3`}>
           <span>Photo</span>
           <span>Name</span>
           <span>Email</span>
@@ -364,7 +365,7 @@ const UsersPage = () => {
                   } hover:bg-[#f3ede4]`}
               >
                 {/* Main Row */}
-                <div className={`${GRID} items-start px-4 py-3 gap-3`}>
+                <div className={`flex flex-col gap-3 ${GRID} lg:items-start lg:gap-3 px-4 py-4 lg:py-3`}>
 
                   {/* Photos — flex-wrap so all images are visible */}
                   <div className="flex flex-wrap gap-1.5">
@@ -402,6 +403,8 @@ const UsersPage = () => {
                       {user.location?.country || "—"}
                       {user.ethnicity && ` · ${user.ethnicity}`}
                     </p>
+                    {/* Email here on phones (own column on desktop) */}
+                    <p className="lg:hidden text-xs text-[#555] break-all">{user.email}</p>
 
                     {/* Age · phone · joined · last active */}
                     <div className="flex flex-wrap gap-1 mt-0.5">
@@ -492,10 +495,10 @@ const UsersPage = () => {
                   </div>
 
                   {/* Email */}
-                  <p className="text-sm text-[#555] truncate pt-1">{user.email}</p>
+                  <p className="hidden lg:block text-sm text-[#555] truncate pt-1">{user.email}</p>
 
                   {/* Status */}
-                  <div className="flex flex-col items-start gap-1 pt-1">
+                  <div className="flex flex-row flex-wrap lg:flex-col items-start gap-1 pt-1">
                     {user.suspended ? (
                       <span className="inline-flex items-center bg-red-100 text-red-700 border border-red-200 text-xs px-2 py-1">
                         <Ban className="w-3 h-3 mr-1" /> Suspended
@@ -518,12 +521,13 @@ const UsersPage = () => {
                   </div>
 
                   {/* Action */}
-                  <div className="flex justify-end pt-1">
+                  {/* Full-width button on phones */}
+                  <div className="flex lg:justify-end pt-1">
                     <Button
                       size="sm"
                       disabled={suspendingId === user._id}
                       onClick={() => handleSuspend(user)}
-                      className={`rounded-none text-xs px-3 py-1 h-auto ${user.suspended
+                      className={`rounded-none text-xs px-3 py-3 lg:py-1 h-auto w-full lg:w-auto justify-center ${user.suspended
                         ? "bg-green-700 hover:bg-green-800 text-white"
                         : "bg-red-700 hover:bg-red-800 text-white"
                         }`}
@@ -549,7 +553,7 @@ const UsersPage = () => {
                     <p className="text-xs uppercase tracking-widest text-[#888] py-2">
                       IP Addresses (last {ipList.length})
                     </p>
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2">
                       {ipList.map((ip, idx) => (
                         <span
                           key={idx}
