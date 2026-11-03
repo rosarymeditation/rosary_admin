@@ -1,6 +1,6 @@
 const { default: axios } = require("axios");
-//const url = "http://localhost:8001/api/";
 const url = "https://softnergy.co.uk/api/";
+//const url = "https://softnergy.co.uk/api/";
 const axiosClient = axios.create({
   baseURL: url,
 });
@@ -189,6 +189,70 @@ const createDistress = async (formData) => {
   });
 };
 
+// ─── Novena (new model) ────────────────────────────────────────────────────────
+// Named createNovena / novenasPage etc. so they don't clash with the existing
+// novenas() and novenaById() functions, which call the old all_novenas / novena_by_id routes.
+
+const authHeaders = () => {
+  const token = localStorage.getItem("authToken");
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
+// FormData: photo (file), code, slug, translationKey, name, subjectType, subjectName,
+// totalDays, dailyItems (JSON string), feast (JSON string), tags, openingPrayers,
+// closingPrayers, isActive ...
+const createNovena = async (formData) => {
+  return await axiosClient.post("novena-v2", formData, {
+    headers: { "Content-Type": "multipart/form-data", ...authHeaders() },
+  });
+};
+
+// FormData: slug (required) + any fields to change, photo (optional new thumbnail)
+const updateNovena = async (formData) => {
+  return await axiosClient.post("novena-v2-update", formData, {
+    headers: { "Content-Type": "multipart/form-data", ...authHeaders() },
+  });
+};
+
+// POST { code, novenas: [ {...}, {...} ] } — imports AI-generated novenas (saved inactive by default)
+const bulkCreateNovenas = async (data) => {
+  return await axiosClient.post("novena-v2-bulk", data, {
+    headers: authHeaders(),
+  });
+};
+
+// POST { slug, isActive } — publish or hide a novena
+const setNovenaActive = async (data) => {
+  return await axiosClient.post("novena-v2-active", data, {
+    headers: authHeaders(),
+  });
+};
+
+// POST { code } — subjectTypes and tags that have active novenas
+const novenaCategories = async (data) => {
+  return await axiosClient.post("novena-v2-categories", data);
+};
+
+// POST { code, page?, limit?, subjectType?, tag?, search?, isFree? } — paginated cards (no days)
+const novenasPage = async (data) => {
+  return await axiosClient.post("novena-v2-page", data);
+};
+
+// POST { slug } — full novena with every day
+const novenaDetail = async (data) => {
+  return await axiosClient.post("novena-v2-detail", data);
+};
+
+// POST { translationKey, code } — same novena in another language
+const novenaTranslation = async (data) => {
+  return await axiosClient.post("novena-v2-translation", data);
+};
+
+// POST { code, lookaheadDays?, limit? } — novenas whose 9-day window is open
+const novenasStartingSoon = async (data) => {
+  return await axiosClient.post("novena-v2-starting-soon", data);
+};
+
 export default {
   novenas,
   novenaById,
@@ -228,4 +292,14 @@ export default {
   prayerById,
   deletePrayer,
   createPlan,
+  // Novena (new model)
+  createNovena,
+  updateNovena,
+  bulkCreateNovenas,
+  setNovenaActive,
+  novenaCategories,
+  novenasPage,
+  novenaDetail,
+  novenaTranslation,
+  novenasStartingSoon,
 };

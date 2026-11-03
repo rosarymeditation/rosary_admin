@@ -1,6 +1,6 @@
 const { default: axios } = require("axios");
-const url = "https://www.server.igbocrush.com/api/";
 //const url = "https://www.server.igbocrush.com/api/";
+const url = "https://www.server.igbocrush.com/api/";
 const axiosClient = axios.create({
   baseURL: url,
 });
@@ -94,11 +94,62 @@ const updatePhotoVerification = async (email, status) => {
   return await axiosClient.post("photoVerifyEmail", { email, status });
 };
 
+// ─── GHOST MODE ───────────────────────────────────────────────────────────────
+
+/**
+ * Hide a user from Discover/timeline (ghost) or show them again.
+ * Leave isGhost out to flip the current value.
+ * Response: { userId, isGhost, message }
+ * @param {string} userId
+ * @param {boolean} [isGhost] true = hidden, false = visible
+ */
+const setGhostMode = async (userId, isGhost) => {
+  return await axiosClient.post(
+    "setGhostMode",
+    isGhost === undefined ? { userId } : { userId, isGhost },
+    getAuthHeaders()
+  );
+};
+
+// ─── FREE DAILY MESSAGES ──────────────────────────────────────────────────────
+
+/**
+ * Turn a user's free daily messages on or off.
+ * Off = they can only chat when matched, with a chat pass, or as premium.
+ * Leave enabled out to flip the current value.
+ * Response: { userId, freeMessagesEnabled, message }
+ * @param {string} userId
+ * @param {boolean} [enabled] true = free messages on, false = off
+ */
+const setFreeMessages = async (userId, enabled) => {
+  return await axiosClient.post(
+    "setFreeMessages",
+    enabled === undefined ? { userId } : { userId, enabled },
+    getAuthHeaders()
+  );
+};
+
+// ─── CHAT HELPER (AI) USAGE ───────────────────────────────────────────────────
+
+/**
+ * Who has used Chat Helper (✨ AI message ideas) and how often.
+ * Response: { summary: { users, taps, tokensSpent, usedToday },
+ *             data: [{ fullname, email, total, tokensSpent, firstUsedAt, lastUsedAt, … }],
+ *             page, limit, hasMore }
+ * @param {{ page?: number, limit?: number }} params
+ */
+const getAiUsageStats = async (params = {}) => {
+  return await axiosClient.post("aiSuggestStats", params);
+};
+
 export default {
   getTimeline,
   getUserById,
   toggleAccountSuspension,
   updatePhotoVerification,
   getPendingVerifications,
-  getBlockedUsersReport
+  getBlockedUsersReport,
+  setGhostMode,
+  setFreeMessages,
+  getAiUsageStats,
 };
